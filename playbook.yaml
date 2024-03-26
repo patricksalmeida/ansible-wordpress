@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+
+    - name: Install updates
+      tags: always
+      package:
+        update_cache: yes
+      changed_when: false
+
+- hosts: wp-servers
+  become: true
+  tasks:
+  
+    - name: Install Apache
+      package:
+        name: apache2
+        state: present
+
+    - name: Start Apache service
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Install PHP
+      package:
+        name: php 
+        state: present
+
+    - name: Install PHP extensions
+      package:
+        name: 
+          - php-bcmath
+          - php-bz2
+          - php-intl
+          - php-gd
+          - php-mbstring
+          - php-mysql
+          - php-zip
+          - php-fpm
+        state: present
+
+    - name: "Download the Wordpress latest version"
+      unarchive:
+        remote_src: yes
+        src: "https://wordpress.org/latest.tar.gz"
+        dest: "/var/www"
+
+    - name: Replace html folder with Wordpress
+      shell: "rm -rf /var/www/html && mv /var/www/wordpress /var/www/html"
+
+    - name: Change Wordpress files owner
+      shell: "chown ubuntu:ubuntu -R /var/www"
+
+    - name: Start Apache service
+      service:
+        name: apache2
+        state: restarted
+        enabled: yes
